@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>GPK ULTRA 3D | Immersive Collector's Hub</title>
+    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+    <script src="https://unpkg.com/aframe-environment-component@1.3.0/dist/aframe-environment-component.min.js"></script>
+    <script src="https://unpkg.com/aframe-event-set-component@5.0.0/dist/aframe-event-set-component.min.js"></script>
+    <script src="https://raw.githubusercontent.com/jeromeetienne/AR.js/3.3.2/aframe/build/aframe-ar.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Bangers', cursive;
+        }
+        #enter-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px 40px;
+            background: #ff3e41;
+            color: #ffde37;
+            border: 5px solid #1a1a1a;
+            font-size: 2.5rem;
+            cursor: pointer;
+            z-index: 10000;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        .ui-panel {
+            position: fixed;
+            background: rgba(26, 26, 26, 0.9);
+            border: 3px solid #ffde37;
+            border-radius: 10px;
+            padding: 15px;
+            z-index: 10000;
+            color: white;
+            max-width: 300px;
+        }
+        #card-details {
+            top: 20px;
+            right: 20px;
+            display: none;
+        }
+        .ar-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: #ff3e41;
+            color: #ffde37;
+            border: 3px solid #1a1a1a;
+            font-size: 1.2rem;
+            cursor: pointer;
+            z-index: 10000;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            font-family: 'Bangers', cursive;
+        }
+        .mode-selector {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 10000;
+        }
+        .mode-btn {
+            padding: 8px 15px;
+            margin-right: 10px;
+            background: #1a1a1a;
+            color: #ffde37;
+            border: 2px solid #ff3e41;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
+</head>
+<body>
+    <button id="enter-button">ENTER IMMERSIVE GALLERY</button>
+    <button id="ar-button" class="ar-button" style="display:none;">ENTER AR MODE</button>
+    
+    <div class="mode-selector" style="display:none;">
+        <button class="mode-btn" id="vr-btn">VR Mode</button>
+        <button class="mode-btn" id="ar-btn">AR Mode</button>
+        <button class="mode-btn" id="hand-btn">Hand Tracking</button>
+    </div>
+    
+    <div id="card-details" class="ui-panel">
+        <h2 style="color:#ffde37;margin-bottom:10px;">CARD DETAILS</h2>
+        <p><strong>Title:</strong> <span id="card-title"></span></p>
+        <p><strong>Series:</strong> <span id="card-series"></span></p>
+        <p><strong>Value:</strong> $<span id="card-value"></span></p>
+    </div>
+
+    <a-scene id="scene" vr-mode-ui="enabled: true" loading-screen="enabled: false" renderer="colorManagement: true" embedded arjs="sourceType: webcam; debugUIEnabled: false">
+        <!-- Environment -->
+        <a-entity environment="preset: starry; groundColor: #1a1a1a; grid: none"></a-entity>
+        
+        <!-- AR Marker -->
+        <a-entity id="marker" visible="false">
+            <!-- Planets -->
+            <a-entity id="planets">
+                <!-- Red Planet -->
+                <a-sphere position="-2 2 -2" radius="0.3" color="#ff3e41" 
+                          animation="property: rotation; to: 0 360 0; loop: true; dur: 60000">
+                    <a-ring color="#ffde37" radius-inner="0.32" radius-outer="0.4" rotation="-60 0 0"></a-ring>
+                </a-sphere>
+                
+                <!-- Gas Giant -->
+                <a-sphere position="2 2 2" radius="0.4" color="#4a90e2" 
+                         animation="property: rotation; to: 0 360 0; loop: true; dur: 80000">
+                    <a-sphere radius="0.06" position="0.3 0 0" color="#ffde37"></a-sphere>
+                </a-sphere>
+                
+                <!-- Moon -->
+                <a-sphere position="1 3 -3" radius="0.16" color="#cccccc" 
+                         animation="property: position; dir: alternate; dur: 10000; to: 1.6 3 -2.6; loop: true"></a-sphere>
+            </a-entity>
+            
+            <!-- Camera Rig -->
+            <a-entity id="rig" movement-controls="speed: 0.5">
+                <a-entity camera look-controls="pointerLockEnabled: true" position="0 1.6 0">
+                    <a-entity cursor="fuse: true; fuseTimeout: 500" 
+                              position="0 0 -1"
+                              geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03"
+                              material="color: #ffde37; shader: flat">
+                    </a-entity>
+                </a-entity>
+            </a-entity>
+            
+            <!-- Floating Cards on Walls -->
+            <a-entity id="north-wall" position="0 1.5 -4" rotation="0 0 0">
+                <a-entity class="card" position="-2 1.5 0" rotation="0 0 0" data-card="1">
+                    <a-image src="#card1" width="0.8" height="1.1"></a-image>
+                </a-entity>
+                <a-entity class="card" position="0 1.5 0" rotation="0 0 0" data-card="2">
+                    <a-image src="#card2" width="0.8" height="1.1"></a-image>
+                </a-entity>
+                <a-entity class="card" position="2 1.5 0" rotation="0 0 0" data-card="3">
+                    <a-image src="#card3" width="0.8" height="1.1"></a-image>
+                </a-entity>
+            </a-entity>
+            
+            <a-entity id="east-wall" position="4 1.5 0" rotation="0 -90 0">
+                <a-entity class="card" position="0 1.5 -2" rotation="0 0 0" data-card="4">
+                    <a-image src="#card4" width="0.8" height="1.1"></a-image>
+                </a-entity>
+                <a-entity class="card" position="0 1.5 0" rotation="0 0 0" data-card="5">
+                    <a-image src="#card5" width="0.8" height="1.1"></a-image>
+                </a-entity>
+                <a-entity class="card" position="0 1.5 2" rotation="0 0 0" data-card="6">
+                    <a-image src="#card6" width="0.8" height="1.1"></a-image>
+                </a-entity>
+            </a-entity>
+            
+            <a-entity id="south-wall" position="0 1.5 4" rotation="0 180 0">
+                <a-entity class="card" position="-2 1.5 0" rotation="0 0 0" data-card="7">
+                    <a-image src="#card1" width="0.8" height="1.1"></a-image>
+                </a-entity>
+                <a-entity class="card" position="0 1.5 0" rotation="0 0 0" data-card="8">
+                    <a-image src="#card2" width="0.8" height="1.1"></a-image>
+                </a-entity>
+                <a-entity class="card" position="2 1.5 0" rotation="0 0 0" data-card="9">
+                    <a-image src="#card3" width="0.8" height="1.1"></a-image>
+                </a-entity>
+            </a-entity>
+            
+            <a-entity id="west-wall" position="-4 1.5 0" rotation="0 90 0">
+                <a-entity class="card" position="0 1.5 -2" rotation="0 0 0" data-card="10">
+                    <a-image src="#card4" width="0.8" height="1.1"></a-image>
+                </a-entity>
+                <a-entity class="card" position="0 1.5 0" rotation="0 0 0" data-card="11">
+                    <a-image src="#card5" width="0.8" height="1.1"></a-image>
+                </a-entity>
+                <a-entity class="card" position="0 1.5 2" rotation="0 0 0" data-card="12">
+                    <a-image src="#card6" width="0.8" height="1.1"></a-image>
+                </a-entity>
+            </a-entity>
+            
+            <!-- Centerpiece -->
+            <a-entity position="0 1.5 0" animation="property: rotation; to: 0 360 0; loop: true; dur: 60000">
+                <a-image src="#featured-card" width="1.5" height="2.1" position="0 1.5 -0.5"></a-image>
+            </a-entity>
+        </a-entity>
+        
+        <!-- Hand Tracking Visuals (hidden by default) -->
+        <a-entity id="hand-left" hand-tracking-controls="hand: left" visible="false">
+            <a-sphere radius="0.02" color="#ff3e41"></a-sphere>
+        </a-entity>
+        <a-entity id="hand-right" hand-tracking-controls="hand: right" visible="false">
+            <a-sphere radius="0.02" color="#4a90e2"></a-sphere>
+        </a-entity>
+        
+        <!-- Teleport Targets -->
+        <a-entity id="teleport-targets">
+            <a-circle class="teleport-spot" position="-2 0 -2" radius="0.5" color="#ffde37" opacity="0.5" rotation="-90 0 0"></a-circle>
+            <a-circle class="teleport-spot" position="2 0 -2" radius="0.5" color="#ffde37" opacity="0.5" rotation="-90 0 0"></a-circle>
+            <a-circle class="teleport-spot" position="0 0 2" radius="0.5" color="#ffde37" opacity="0.5" rotation="-90 0 0"></a-circle>
+        </a-entity>
+        
+        <!-- Assets -->
+        <a-assets>
+            <!-- Replace these with your actual card images -->
+            <img id="card1" src="PompaPaulie.png">
+            <img id="card2" src="20250503011555.png">
+            <img id="card3" src="Os10_custom_wrapper.png">
+            <img id="card4" src="20250503012558.png">
+            <img id="card5" src="20250503022823.png">
+            <img id="card6" src="20250503032454.png">
+            <img id="featured-card" src="PompaPaulie.png">
+        </a-assets>
+    </a-scene>
+
+    <script>
+        // Main App Controller
+        class App {
+            constructor() {
+                this.experienceManager = new ExperienceManager();
+                this.xrManager = new EnhancedXRManager();
+                this.responsiveManager = new ResponsiveManager();
+                this.handTracking = new HandTracking();
+                this.teleportControls = new TeleportControls();
+                
+                this.init();
+            }
+            
+            init() {
+                this.setupUI();
+                this.setupCardInteractions();
+                this.responsiveManager.init();
+            }
+            
+            setupUI() {
+                document.getElementById('enter-button').addEventListener('click', () => {
+                    this.enterImmersiveMode();
+                });
+                
+                document.getElementById('ar-button').addEventListener('click', () => {
+                    this.xrManager.enterARMode();
+                });
+                
+                document.getElementById('vr-btn').addEventListener('click', () => {
+                    this.xrManager.enterVRMode();
+                });
+                
+                document.getElementById('ar-btn').addEventListener('click', () => {
+                    this.xrManager.enterARMode();
+                });
+                
+                document.getElementById('hand-btn').addEventListener('click', () => {
+                    this.handTracking.toggleHandTracking();
+                });
+            }
+            
+            enterImmersiveMode() {
+                document.getElementById('enter-button').style.display = 'none';
+                document.getElementById('ar-button').style.display = 'block';
+                document.querySelector('.mode-selector').style.display = 'block';
+                
+                this.xrManager.initDefaultMode();
+            }
+            
+            setupCardInteractions() {
+                // Card data - expanded for 12 cards (3 per wall)
+                const cardData = {
+                    "1": { title: "Pompa Paulie", series: "Ultra 3D", value: 150.00 },
+                    "2": { title: "Ultra 3D", series: "Series 2025", value: 125.00 },
+                    "3": { title: "OS10 Wrapper", series: "Vintage", value: 200.00 },
+                    "4": { title: "3D Special", series: "Series 2025", value: 175.00 },
+                    "5": { title: "Rare Edition", series: "Ultra 3D", value: 225.00 },
+                    "6": { title: "Collector's Item", series: "Vintage", value: 250.00 },
+                    "7": { title: "Pompa Paulie Gold", series: "Ultra 3D", value: 180.00 },
+                    "8": { title: "Ultra 3D Holo", series: "Series 2025", value: 135.00 },
+                    "9": { title: "OS10 Premium", series: "Vintage", value: 220.00 },
+                    "10": { title: "3D Limited", series: "Series 2025", value: 195.00 },
+                    "11": { title: "Rare Foil", series: "Ultra 3D", value: 240.00 },
+                    "12": { title: "Collector's Gem", series: "Vintage", value: 275.00 }
+                };
+
+                document.querySelectorAll('.card').forEach(card => {
+                    card.addEventListener('click', () => {
+                        const cardId = card.getAttribute('data-card');
+                        this.showCardDetails(cardId, card);
+                    });
+                });
+            }
+            
+            showCardDetails(cardId, cardElement) {
+                const card = cardData[cardId];
+                if (!card) return;
+                
+                // Update UI
+                document.getElementById('card-title').textContent = card.title;
+                document.getElementById('card-series').textContent = card.series;
+                document.getElementById('card-value').textContent = card.value.toFixed(2);
+                
+                // Show panel
+                const panel = document.getElementById('card-details');
+                panel.style.display = 'block';
+                
+                // Add animation to card
+                this.experienceManager.animateCard(cardElement);
+                
+                // Hide after 5 seconds
+                if (panel.hideTimeout) clearTimeout(panel.hideTimeout);
+                panel.hideTimeout = setTimeout(() => {
+                    panel.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // Enhanced XR Manager
+        class EnhancedXRManager {
+            constructor() {
+                this.scene = document.getElementById('scene');
+                this.marker = document.getElementById('marker');
+            }
+            
+            initDefaultMode() {
+                this.marker.setAttribute('visible', 'true');
+                this.scene.removeAttribute('arjs');
+                this.scene.setAttribute('vr-mode-ui', 'enabled: true');
+                this.resetPlanetScales();
+            }
+            
+            enterVRMode() {
+                this.marker.setAttribute('visible', 'true');
+                this.scene.removeAttribute('arjs');
+                this.scene.setAttribute('vr-mode-ui', 'enabled: true');
+                this.resetPlanetScales();
+                
+                const camera = document.querySelector('[camera]');
+                camera.setAttribute('look-controls', {
+                    enabled: true,
+                    pointerLockEnabled: true
+                });
+            }
+            
+            enterARMode() {
+                document.getElementById('ar-button').style.display = 'none';
+                document.getElementById('enter-button').style.display = 'none';
+                
+                this.scene.setAttribute('arjs', 'sourceType: webcam; debugUIEnabled: false');
+                this.scene.setAttribute('vr-mode-ui', 'enabled: false');
+                this.marker.setAttribute('visible', 'true');
+                this.scalePlanets(0.5);
+                
+                const camera = document.querySelector('[camera]');
+                camera.setAttribute('look-controls', {
+                    enabled: true,
+                    pointerLockEnabled: false
+                });
+            }
+            
+            scalePlanets(scale) {
+                document.querySelectorAll('#planets a-sphere, #planets a-ring').forEach(el => {
+                    el.setAttribute('scale', `${scale} ${scale} ${scale}`);
+                });
+            }
+            
+            resetPlanetScales() {
+                document.querySelectorAll('#planets a-sphere, #planets a-ring').forEach(el => {
+                    el.removeAttribute('scale');
+                });
+            }
+        }
+
+        // Experience Manager
+        class ExperienceManager {
+            animateCard(cardElement) {
+                // Remove any existing animations
+                cardElement.removeAttribute('animation');
+                
+                // Add pulse animation
+                cardElement.setAttribute('animation__click', {
+                    property: 'scale',
+                    to: '1.1 1.1 1.1',
+                    dur: 300,
+                    easing: 'easeInOutQuad',
+                    dir: 'alternate',
+                    loop: false
+                });
+                
+                // Reset animation after it completes
+                setTimeout(() => {
+                    cardElement.removeAttribute('animation__click');
+                    cardElement.object3D.scale.set(1, 1, 1);
+                }, 600);
+            }
+            
+            adjustForDeviceType() {
+                // Implementation would check device capabilities
+            }
+        }
+
+        // Hand Tracking
+        class HandTracking {
+            constructor() {
+                this.leftHand = document.getElementById('hand-left');
+                this.rightHand = document.getElementById('hand-right');
+                this.isActive = false;
+            }
+            
+            toggleHandTracking() {
+                this.isActive = !this.isActive;
+                
+                if (this.isActive) {
+                    this.leftHand.setAttribute('visible', 'true');
+                    this.rightHand.setAttribute('visible', 'true');
+                    
+                    // Enable hand tracking controls
+                    this.leftHand.setAttribute('hand-tracking-controls', 'hand: left');
+                    this.rightHand.setAttribute('hand-tracking-controls', 'hand: right');
+                } else {
+                    this.leftHand.setAttribute('visible', 'false');
+                    this.rightHand.setAttribute('visible', 'false');
+                    
+                    // Disable hand tracking controls
+                    this.leftHand.removeAttribute('hand-tracking-controls');
+                    this.rightHand.removeAttribute('hand-tracking-controls');
+                }
+            }
+        }
+
+        // Responsive Manager
+        class ResponsiveManager {
+            init() {
+                window.addEventListener('resize', this.handleResize.bind(this));
+                this.handleResize();
+            }
+            
+            handleResize() {
+                // Adjust UI elements based on screen size
+                const isMobile = window.innerWidth < 768;
+                
+                if (isMobile) {
+                    // Mobile-specific adjustments
+                    document.querySelectorAll('.card').forEach(card => {
+                        card.setAttribute('scale', '0.8 0.8 0.8');
+                    });
+                } else {
+                    // Desktop adjustments
+                    document.querySelectorAll('.card').forEach(card => {
+                        card.setAttribute('scale', '1 1 1');
+                    });
+                }
+            }
+        }
+
+        // Teleport Controls
+        class TeleportControls {
+            constructor() {
+                this.teleportSpots = document.querySelectorAll('.teleport-spot');
+                this.init();
+            }
+            
+            init() {
+                this.teleportSpots.forEach(spot => {
+                    spot.addEventListener('click', (e) => {
+                        const position = e.target.getAttribute('position');
+                        this.teleportUser(position);
+                    });
+                });
+            }
+            
+            teleportUser(position) {
+                const rig = document.getElementById('rig');
+                rig.setAttribute('position', position);
+                
+                // Add visual effect
+                const effect = document.createElement('a-entity');
+                effect.setAttribute('geometry', 'primitive: ring; radiusInner: 0.1; radiusOuter: 0.5');
+                effect.setAttribute('material', 'color: #ffde37; shader: flat; opacity: 0.8');
+                effect.setAttribute('position', `${position.x} ${position.y + 0.1} ${position.z}`);
+                effect.setAttribute('rotation', '-90 0 0');
+                effect.setAttribute('animation', 'property: scale; to: 2 2 2; dur: 500; easing: easeOutQuad');
+                
+                document.getElementById('marker').appendChild(effect);
+                
+                setTimeout(() => {
+                    document.getElementById('marker').removeChild(effect);
+                }, 500);
+            }
+        }
+
+        // WebXR Manager
+        class WebXRManager {
+            constructor() {
+                this.scene = document.getElementById('scene');
+            }
+            
+            checkXRSupport() {
+                if (navigator.xr) {
+                    navigator.xr.isSessionSupported('immersive-vr').then((supported) => {
+                        if (supported) {
+                            console.log('VR is supported');
+                        } else {
+                            console.log('VR is not supported');
+                        }
+                    });
+                    
+                    navigator.xr.isSessionSupported('immersive-ar').then((supported) => {
+                        if (supported) {
+                            console.log('AR is supported');
+                        } else {
+                            console.log('AR is not supported');
+                        }
+                    });
+                }
+            }
+        }
+
+        // Initialize the app
+        const app = new App();
+    </script>
+</body>
+</html>
