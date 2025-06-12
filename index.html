@@ -59,7 +59,14 @@
     <a-scene vr-mode-ui="enabled: true" loading-screen="enabled: false" renderer="colorManagement: true">
       <a-scene renderer="highRefreshRate: true; powerPreference: high-performance"
                xr-mode-ui="frameRate: 90">
-        <!-- Environment -->
+      <a-entity id="south-wall" visible="false">
+      <a-entity class="card" 
+          data-card="4"
+          event-set__1="_event: gaze; material.opacity: 0.8"
+          event-set__2="_event: gazeout; material.opacity: 0.5">
+          <!-- Content -->
+      </a-entity>
+          <!-- Environment -->
         <a-entity environment="preset: starry; groundColor: #1a1a1a; grid: none"></a-entity>
         
         <!-- Camera Rig -->
@@ -118,6 +125,9 @@
             <img id="card4" src="20250503012558.png">
             <img id="card5" src="20250503022823.png">
             <img id="card6" src="20250503032454.png">
+            <img id="card7" src="">
+            <img id="card8" src="">
+            <img id="card9" src="">
             <img id="featured-card" src="PompaPaulie.png">
         </a-assets>
     </a-scene>
@@ -130,7 +140,10 @@
             "3": { title: "OS10 Wrapper", series: "Vintage", value: 200.00 },
             "4": { title: "3D Special", series: "Series 2025", value: 175.00 },
             "5": { title: "Rare Edition", series: "Ultra 3D", value: 225.00 },
-            "6": { title: "Collector's Item", series: "Vintage", value: 250.00 }
+            "6": { title: "Collector's Item", series: "Vintage", value: 250.00 },
+            "7": { title: "Collector's Item", series: "Vintage", value: 250.00 },
+            "8": { title: "Collector's Item", series: "Vintage", value: 150.00 },
+            "9": { title: "Collector's Item", series: "Vintage", value: 125.00 },
         };
 
         // Initialize scene
@@ -175,6 +188,23 @@
                 document.getElementById('card-details').style.display = 'none';
             }, 5000);
         }
+        
+        AFRAME.registerComponent('wall-manager', {
+  tick: function() {
+    const camera = document.querySelector('[camera]');
+    const northWall = document.getElementById('north-wall');
+    const southWall = document.getElementById('south-wall');
+    
+    // Toggle based on camera orientation
+    northWall.setAttribute('visible', camera.object3D.position.z < 0);
+    southWall.setAttribute('visible', camera.object3D.position.z >= 0);
+  }
+});
+        // Preload all card textures
+const loader = new THREE.TextureLoader();
+['#card1','#card2','#card3','#card4','#card5','#card6'].forEach(src => {
+  loader.load(src, tex => tex.needsUpdate = true);
+});
     </script>
 </body>
 </html>
