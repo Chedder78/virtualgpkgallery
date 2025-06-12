@@ -57,6 +57,8 @@
     </div>
 
     <a-scene vr-mode-ui="enabled: true" loading-screen="enabled: false" renderer="colorManagement: true">
+      <a-scene renderer="highRefreshRate: true; powerPreference: high-performance"
+               xr-mode-ui="frameRate: 90">
         <!-- Environment -->
         <a-entity environment="preset: starry; groundColor: #1a1a1a; grid: none"></a-entity>
         
